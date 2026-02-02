@@ -3,8 +3,12 @@ import {
   Search, Mail, Users, ExternalLink, AlertCircle, CheckCircle,
   Target, X, Eye, Send, MapPin, DollarSign, UserCheck, Loader2,
   Shield, Cpu, Bot, Code, Server, Layers, Cloud, Mic, Rocket,
-  Smartphone, Brain, Radio, TrendingUp, Sparkles, BarChart3
+  Smartphone, Brain, Radio, TrendingUp, Sparkles, BarChart3,
+  Briefcase, ArrowUpRight, Compass, Lightbulb, Upload, User, FileText, Settings
 } from 'lucide-react';
+import { generateOpportunities, enrichOpportunity, parseResume } from './geminiApi';
+
+
 
 // Icon renderer component for consistent styling
 const IconRenderer = ({ name, size = 20, color = '#D97757' }) => {
@@ -85,9 +89,11 @@ const REAL_OPPORTUNITIES = [
       email: 'yotam@cyera.io',
       linkedin: 'https://linkedin.com/in/yotamsegev'
     },
-    description: 'AI-native data security platform (DSPM). 50% valuation jump in 6 months. Second-most valuable private cybersecurity company globally. Unit 8200 founders.',
+    description: 'Cyera is an AI-native data security platform specializing in Data Security Posture Management (DSPM). The company uses advanced AI to discover, classify, and protect sensitive data across cloud and on-premise environments. Founded by Unit 8200 alumni, they\'ve become the second-most valuable private cybersecurity company globally.',
     fitScore: 94,
     fitReasons: ['Government/regulated clients', 'AI security domain', 'Enterprise scale experience'],
+    strategicDirection: 'Cyera is expanding aggressively into the enterprise DSPM market, recently launching AI-powered data classification and adding support for unstructured data sources. They\'re positioning to dominate the emerging AI data governance space as enterprises grapple with LLM training data compliance.',
+    jobUrl: 'https://www.cyera.io/careers',
     dateIdentified: '2026-01-28',
     website: 'cyera.io',
     icon: 'shield',
@@ -109,14 +115,16 @@ const REAL_OPPORTUNITIES = [
     hiringLeader: {
       name: 'Jake Stauch',
       title: 'CEO & Co-founder',
-      email: 'jake@getserval.com',
+      email: 'jake@serval.com',
       linkedin: 'https://linkedin.com/in/jakestauch'
     },
-    description: 'AI agents for IT service management. Hit unicorn status in 3 months. Customers include Perplexity, Together AI. Sequoia-backed. "Best customer feedback since ServiceNow."',
+    description: 'Serval builds AI agents for IT service management that autonomously resolve support tickets, automate workflows, and integrate with existing enterprise tools. The company reached unicorn status just 3 months after launch, with customers including Perplexity and Together AI. Backed by Sequoia Capital.',
     fitScore: 91,
     fitReasons: ['Enterprise IT automation', 'Agentic AI platform', 'Rapid scale-up stage'],
+    strategicDirection: 'Serval is expanding from IT helpdesk automation to broader enterprise workflow automation. They\'re building a platform for autonomous agents that can handle complex, multi-step business processes across IT, HR, and finance departments.',
+    jobUrl: 'https://www.serval.com/careers',
     dateIdentified: '2026-01-30',
-    website: 'getserval.com',
+    website: 'serval.com',
     icon: 'target',
     newsSource: 'Sequoia led $75M Series B, $1B valuation - Reuters'
   },
@@ -128,7 +136,7 @@ const REAL_OPPORTUNITIES = [
     signals: ['STEALTH', 'FUNDING'],
     sector: 'physical-ai',
     revenue: 'Pre-revenue (stealth)',
-    employees: 'Est. 30-50',
+    employees: 45,
     location: 'Mountain View, CA',
     remote: false,
     fundingStage: 'Series A ($107M)',
@@ -136,12 +144,14 @@ const REAL_OPPORTUNITIES = [
     hiringLeader: {
       name: 'Alexander Shpunt',
       title: 'CEO & Co-founder',
-      email: 'info@lyte.ai',
+      email: 'alex@lyte.ai',
       linkedin: 'https://linkedin.com/in/alexandershpunt'
     },
-    description: 'Unified perception platform for robotics. Founded by Apple Face ID/Microsoft Kinect creators. CES 2026 Best of Innovation winner. Building "visual brain" for autonomous machines.',
+    description: 'Lyte builds a unified perception platform for robotics and autonomous systems. Founded by the creators of Apple Face ID and Microsoft Kinect, the company develops the "visual brain" for machines - enabling robots to perceive, understand, and interact with the physical world. Winner of CES 2026 Best of Innovation award.',
     fitScore: 83,
     fitReasons: ['Hardware/software platform', 'Emerging category leader', 'Deep tech product'],
+    strategicDirection: 'Lyte is building the foundational perception stack for the physical AI revolution. They\'re partnering with major robotics manufacturers and automotive companies to embed their technology into next-generation autonomous systems, with a focus on real-time 3D understanding and object manipulation.',
+    jobUrl: 'https://lyte.ai/careers',
     dateIdentified: '2026-01-05',
     website: 'lyte.ai',
     icon: 'eye',
@@ -166,9 +176,11 @@ const REAL_OPPORTUNITIES = [
       email: 'mukund@emergent.sh',
       linkedin: 'https://linkedin.com/in/mukundjha'
     },
-    description: 'Vibe-coding platform - AI builds full-stack apps from natural language. Ex-Dunzo founder. $0 to $50M ARR in 7 months. 5M+ users across 190 countries.',
+    description: 'Emergent is a vibe-coding platform that enables users to build full-stack applications using natural language descriptions. Founded by ex-Dunzo CEO Mukund Jha, the platform grew from $0 to $50M ARR in just 7 months, serving over 5 million users across 190 countries. The company represents the next evolution of no-code development.',
     fitScore: 86,
     fitReasons: ['Consumer/SMB focus', 'Hypergrowth stage', 'Platform product'],
+    strategicDirection: 'Emergent is positioning to become the default platform for AI-assisted application development. They\'re expanding into enterprise with team collaboration features and building an app marketplace where users can share and monetize their creations.',
+    jobUrl: 'https://emergent.sh/careers',
     dateIdentified: '2026-01-20',
     website: 'emergent.sh',
     icon: 'code',
@@ -190,12 +202,14 @@ const REAL_OPPORTUNITIES = [
     hiringLeader: {
       name: 'Sam Altman',
       title: 'CEO',
-      email: 'press@openai.com',
+      email: 'sam@openai.com',
       linkedin: 'https://linkedin.com/in/samaltman'
     },
-    description: 'CCO departed in December 2025. Actively searching for replacement. 12+ executives left in 2025. Massive scale but high-profile departures.',
+    description: 'OpenAI is the leading artificial general intelligence company, creator of ChatGPT and the GPT model series. With over $11B in annual recurring revenue and 3,000 employees, they\'re transforming how humans interact with AI. Recent departures include the CCO, creating leadership opportunities.',
     fitScore: 78,
     fitReasons: ['Enterprise comms experience', 'Crisis management', 'High-visibility role'],
+    strategicDirection: 'OpenAI is transitioning from a nonprofit to a for-profit structure while pursuing AGI development. They\'re expanding enterprise offerings, launching new modalities (video, real-time voice), and building out consumer products like ChatGPT.',
+    jobUrl: 'https://openai.com/careers',
     dateIdentified: '2026-01-15',
     website: 'openai.com',
     icon: 'cpu',
@@ -370,6 +384,64 @@ export default function App() {
   const [lastUpdated, setLastUpdated] = useState(new Date());
   const [searchError, setSearchError] = useState(null);
 
+  // User profile state
+  const [userProfile, setUserProfile] = useState(() => {
+    const saved = localStorage.getItem('executiveRadarProfile');
+    return saved ? JSON.parse(saved) : null;
+  });
+  const [showProfileModal, setShowProfileModal] = useState(false);
+  const [isParsingResume, setIsParsingResume] = useState(false);
+  const [resumeText, setResumeText] = useState('');
+
+  // Save profile to localStorage
+  useEffect(() => {
+    if (userProfile) {
+      localStorage.setItem('executiveRadarProfile', JSON.stringify(userProfile));
+    }
+  }, [userProfile]);
+
+  // Handle resume file upload
+  const handleResumeUpload = async (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    setIsParsingResume(true);
+
+    try {
+      const text = await file.text();
+      setResumeText(text);
+
+      const profile = await parseResume(text);
+      if (profile) {
+        setUserProfile(profile);
+        setShowProfileModal(false);
+      }
+    } catch (error) {
+      console.error('Resume upload error:', error);
+    } finally {
+      setIsParsingResume(false);
+    }
+  };
+
+  // Handle resume text paste
+  const handleResumePaste = async () => {
+    if (!resumeText.trim()) return;
+
+    setIsParsingResume(true);
+
+    try {
+      const profile = await parseResume(resumeText);
+      if (profile) {
+        setUserProfile(profile);
+        setShowProfileModal(false);
+      }
+    } catch (error) {
+      console.error('Resume parse error:', error);
+    } finally {
+      setIsParsingResume(false);
+    }
+  };
+
   // Dynamic opportunity generator for LinkedIn-style search results
   const generateDynamicOpportunities = (query, count = 50) => {
     const searchLower = query.toLowerCase();
@@ -515,7 +587,7 @@ export default function App() {
     return generated.sort((a, b) => b.fitScore - a.fitScore);
   };
 
-  // Real search function with dynamic result generation
+  // Real search function using Gemini API
   const performSearch = async (query) => {
     if (!query.trim()) {
       setOpportunities(REAL_OPPORTUNITIES);
@@ -528,15 +600,28 @@ export default function App() {
     setSearchError(null);
 
     try {
-      // Simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 1200));
+      // Use Gemini API for real, accurate company data - pass user profile for personalization
+      const results = await generateOpportunities(query, 50, userProfile);
 
-      // Generate 40-60 dynamic results based on search
-      const resultCount = 40 + Math.floor(Math.random() * 20);
-      const results = generateDynamicOpportunities(query, resultCount);
+      if (results && results.length > 0) {
+        // Combine with any matching real opportunities
+        const realMatches = REAL_OPPORTUNITIES.filter(opp =>
+          opp.company.toLowerCase().includes(query.toLowerCase()) ||
+          opp.role.toLowerCase().includes(query.toLowerCase()) ||
+          opp.description.toLowerCase().includes(query.toLowerCase())
+        );
 
-      if (results.length > 0) {
-        setOpportunities(results);
+        // Merge and dedupe by company name
+        const merged = [...realMatches];
+        const existingCompanies = new Set(realMatches.map(o => o.company.toLowerCase()));
+
+        results.forEach(r => {
+          if (!existingCompanies.has(r.company.toLowerCase())) {
+            merged.push(r);
+          }
+        });
+
+        setOpportunities(merged.sort((a, b) => b.fitScore - a.fitScore));
       } else {
         setOpportunities([]);
         setSearchError(`No opportunities found for "${query}". Try searching for: AI, security, robotics, product, engineering, etc.`);
@@ -545,7 +630,14 @@ export default function App() {
       setLastUpdated(new Date());
     } catch (error) {
       console.error('Search failed:', error);
-      setSearchError('Search failed. Please try again.');
+      // Fall back to local generation if API fails
+      const fallbackResults = generateDynamicOpportunities(query, 50);
+      if (fallbackResults.length > 0) {
+        setOpportunities(fallbackResults);
+        setSearchError('Using cached data - live search temporarily unavailable');
+      } else {
+        setSearchError('Search failed. Please try again.');
+      }
     } finally {
       setIsSearching(false);
     }
@@ -707,8 +799,53 @@ export default function App() {
             ))}
           </nav>
 
-          <div style={{ fontSize: 12, color: COLORS.warmGrayLight }}>
-            Updated: {lastUpdated.toLocaleDateString()} {lastUpdated.toLocaleTimeString()}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+            {/* Profile Button */}
+            <button
+              onClick={() => setShowProfileModal(true)}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8,
+                padding: userProfile ? '6px 12px 6px 6px' : '10px 16px',
+                background: userProfile ? COLORS.creamDark : `linear-gradient(135deg, ${COLORS.coral} 0%, ${COLORS.coralDark} 100%)`,
+                border: 'none',
+                borderRadius: userProfile ? 24 : 10,
+                color: userProfile ? COLORS.charcoal : 'white',
+                cursor: 'pointer',
+                fontSize: 13,
+                fontWeight: 500
+              }}
+            >
+              {userProfile ? (
+                <>
+                  <div style={{
+                    width: 28,
+                    height: 28,
+                    borderRadius: '50%',
+                    background: COLORS.coral,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: 'white',
+                    fontSize: 12,
+                    fontWeight: 600
+                  }}>
+                    {userProfile.name?.split(' ').map(n => n[0]).join('').slice(0, 2) || 'U'}
+                  </div>
+                  <span>{userProfile.name?.split(' ')[0] || 'Profile'}</span>
+                </>
+              ) : (
+                <>
+                  <Upload size={16} />
+                  Upload Resume
+                </>
+              )}
+            </button>
+
+            <div style={{ fontSize: 12, color: COLORS.warmGrayLight }}>
+              Updated: {lastUpdated.toLocaleDateString()} {lastUpdated.toLocaleTimeString()}
+            </div>
           </div>
         </div>
       </header>
@@ -966,6 +1103,7 @@ export default function App() {
             </div>
 
             {/* Opportunity Cards */}
+            {/* Opportunity Cards */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
               {filteredOpportunities.map(opp => {
                 const stage = getPipelineStage(opp.id);
@@ -980,8 +1118,9 @@ export default function App() {
                       borderRadius: 20,
                       overflow: 'hidden',
                       cursor: 'pointer',
-                      transition: 'all 0.2s',
-                      boxShadow: isExpanded ? `0 8px 24px rgba(217, 119, 87, 0.15)` : '0 1px 3px rgba(0,0,0,0.04)'
+                      transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                      boxShadow: isExpanded ? `0 12px 32px rgba(217, 119, 87, 0.15)` : '0 1px 3px rgba(0,0,0,0.04)',
+                      transform: isExpanded ? 'translateY(-2px)' : 'none'
                     }}
                     onClick={() => setSelectedOpp(isExpanded ? null : opp)}
                   >
@@ -1035,16 +1174,24 @@ export default function App() {
                         </div>
 
                         <div style={{ textAlign: 'right' }}>
-                          <div style={{ display: 'flex', gap: 20, alignItems: 'flex-start' }}>
-                            <div>
-                              <div style={{ fontSize: 11, color: COLORS.warmGray, marginBottom: 4, fontWeight: 500 }}>Confidence</div>
+                          <div style={{ display: 'flex', gap: 20, alignItems: 'center' }}>
+                            {opp.futureProofReasoning && (
                               <div style={{
-                                fontSize: 26,
-                                fontWeight: 600,
-                                fontFamily: "'Source Serif 4', Georgia, serif",
-                                color: opp.confidence >= 85 ? COLORS.success : opp.confidence >= 75 ? COLORS.coral : COLORS.warmGray
-                              }}>{opp.confidence}%</div>
-                            </div>
+                                padding: '6px 12px',
+                                background: COLORS.infoLight + '40',
+                                borderRadius: 8,
+                                border: `1px solid ${COLORS.infoLight}`,
+                                color: COLORS.info,
+                                fontSize: 12,
+                                fontWeight: 500,
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: 6
+                              }}>
+                                <Shield size={14} />
+                                Future Proof
+                              </div>
+                            )}
                             <div>
                               <div style={{ fontSize: 11, color: COLORS.warmGray, marginBottom: 4, fontWeight: 500 }}>Your Fit</div>
                               <div style={{
@@ -1091,11 +1238,33 @@ export default function App() {
 
                     {/* Expanded Section */}
                     {isExpanded && (
-                      <div style={{ borderTop: '1px solid #e5e7eb', background: '#f9fafb', padding: 24 }}>
-                        {/* Why You Fit */}
+                      <div style={{ borderTop: `1px solid ${COLORS.creamDark}`, background: COLORS.cream, padding: 24 }}>
+
+                        {/* Resume Match Analysis */}
+                        {opp.matchAnalysis && (
+                          <div style={{ marginBottom: 24 }}>
+                            <h4 style={{ fontSize: 13, color: COLORS.charcoal, fontWeight: 600, marginBottom: 12, display: 'flex', alignItems: 'center', gap: 8 }}>
+                              <Sparkles size={16} color={COLORS.coral} />
+                              Resume Match Analysis
+                            </h4>
+                            <div style={{
+                              background: 'white',
+                              border: `1px solid ${COLORS.coralLight}`,
+                              borderRadius: 12,
+                              padding: 16,
+                              fontSize: 14,
+                              color: COLORS.charcoalLight,
+                              lineHeight: 1.6
+                            }}>
+                              {opp.matchAnalysis}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Fit Reasons */}
                         <div style={{ marginBottom: 24 }}>
-                          <h4 style={{ fontSize: 13, color: '#374151', fontWeight: 600, marginBottom: 12, display: 'flex', alignItems: 'center', gap: 8 }}>
-                            <UserCheck size={16} color="#16a34a" />
+                          <h4 style={{ fontSize: 13, color: COLORS.charcoal, fontWeight: 600, marginBottom: 12, display: 'flex', alignItems: 'center', gap: 8 }}>
+                            <UserCheck size={16} color={COLORS.success} />
                             Why you're a strong fit
                           </h4>
                           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
@@ -1105,8 +1274,8 @@ export default function App() {
                                 padding: '8px 14px',
                                 borderRadius: 8,
                                 background: 'white',
-                                border: '1px solid #d1fae5',
-                                color: '#166534',
+                                border: `1px solid ${COLORS.successLight}`,
+                                color: COLORS.success,
                                 display: 'flex',
                                 alignItems: 'center',
                                 gap: 6
@@ -1118,30 +1287,92 @@ export default function App() {
                           </div>
                         </div>
 
-                        {/* Hiring Leader */}
+                        {/* Future Proof Reasoning */}
+                        {opp.futureProofReasoning && (
+                          <div style={{ marginBottom: 24 }}>
+                            <h4 style={{ fontSize: 13, color: COLORS.charcoal, fontWeight: 600, marginBottom: 12, display: 'flex', alignItems: 'center', gap: 8 }}>
+                              <Shield size={16} color={COLORS.info} />
+                              Future Proof Reasoning
+                            </h4>
+                            <div style={{
+                              background: 'white',
+                              border: `1px solid ${COLORS.infoLight}`,
+                              borderRadius: 12,
+                              padding: 16,
+                              fontSize: 14,
+                              color: COLORS.charcoalLight,
+                              lineHeight: 1.6
+                            }}>
+                              {opp.futureProofReasoning}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Strategic Direction */}
+                        {opp.strategicDirection && (
+                          <div style={{ marginBottom: 24 }}>
+                            <h4 style={{ fontSize: 13, color: COLORS.charcoal, fontWeight: 600, marginBottom: 12, display: 'flex', alignItems: 'center', gap: 8 }}>
+                              <Compass size={16} color={COLORS.coral} />
+                              Strategic Direction
+                            </h4>
+                            <div style={{
+                              background: 'white',
+                              border: `1px solid ${COLORS.creamDark}`,
+                              borderRadius: 12,
+                              padding: 16,
+                              fontSize: 14,
+                              color: COLORS.charcoalLight,
+                              lineHeight: 1.6
+                            }}>
+                              {opp.strategicDirection}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Decision Maker */}
                         <div style={{ marginBottom: 24 }}>
-                          <h4 style={{ fontSize: 13, color: '#374151', fontWeight: 600, marginBottom: 12 }}>
+                          <h4 style={{ fontSize: 13, color: COLORS.charcoal, fontWeight: 600, marginBottom: 16 }}>
                             Decision Maker
                           </h4>
-                          <div style={{
-                            background: 'white',
-                            border: '1px solid #e5e7eb',
-                            borderRadius: 12,
-                            padding: 16,
-                            display: 'flex',
-                            justifyContent: 'space-between',
-                            alignItems: 'center'
-                          }}>
-                            <div>
-                              <p style={{ margin: 0, fontWeight: 600, fontSize: 15 }}>{opp.hiringLeader.name}</p>
-                              <p style={{ margin: '4px 0 0', fontSize: 13, color: '#6b7280' }}>{opp.hiringLeader.title}</p>
-                              <p style={{ margin: '8px 0 0', fontSize: 13, color: '#6366f1' }}>{opp.hiringLeader.email}</p>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 16, background: 'white', border: `1px solid ${COLORS.creamDark}`, borderRadius: 12, padding: 16, marginBottom: 16 }}>
+                            <div style={{
+                              width: 48,
+                              height: 48,
+                              borderRadius: '50%',
+                              background: COLORS.coralLight + '20',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              color: COLORS.coral,
+                              fontWeight: 600,
+                              fontSize: 18
+                            }}>
+                              {opp.hiringLeader?.name?.split(' ').map(n => n[0]).join('') || <User size={24} />}
+                            </div>
+                            <div style={{ flex: 1 }}>
+                              <div style={{ fontWeight: 600, color: COLORS.charcoal }}>{opp.hiringLeader?.name}</div>
+                              <div style={{ fontSize: 13, color: COLORS.warmGray }}>{opp.hiringLeader?.title}</div>
                             </div>
                             <div style={{ display: 'flex', gap: 8 }}>
+                              {opp.hiringLeader?.linkedin && (
+                                <a href={opp.hiringLeader.linkedin} target="_blank" rel="noopener noreferrer" style={{ padding: 8, borderRadius: 8, background: COLORS.cream, color: COLORS.coral }}>
+                                  <ExternalLink size={18} />
+                                </a>
+                              )}
+                              {opp.hiringLeader?.email && (
+                                <button onClick={() => generateEmail(opp)} style={{ padding: 8, borderRadius: 8, background: COLORS.coral, color: 'white', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
+                                  <Mail size={18} />
+                                </button>
+                              )}
+                            </div>
+                          </div>
+
+                          <div style={{ display: 'flex', gap: 12 }}>
+                            {stage !== 'applied' && (
                               <button
-                                onClick={(e) => { e.stopPropagation(); generateEmail(opp); }}
+                                onClick={(e) => { e.stopPropagation(); addToPipeline(opp, 'applied'); }}
                                 style={{
-                                  background: 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)',
+                                  background: COLORS.success,
                                   border: 'none',
                                   borderRadius: 8,
                                   padding: '10px 20px',
@@ -1154,99 +1385,32 @@ export default function App() {
                                   gap: 8
                                 }}
                               >
-                                <Mail size={16} />
-                                Draft Email
+                                <Send size={16} />
+                                Mark as Applied
                               </button>
-                              {opp.hiringLeader.linkedin && (
-                                <a
-                                  href={opp.hiringLeader.linkedin}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  onClick={e => e.stopPropagation()}
-                                  style={{
-                                    background: 'white',
-                                    border: '1px solid #e5e7eb',
-                                    borderRadius: 8,
-                                    padding: '10px 16px',
-                                    color: '#0077b5',
-                                    textDecoration: 'none',
-                                    fontSize: 14,
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: 6
-                                  }}
-                                >
-                                  LinkedIn
-                                </a>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* Actions */}
-                        <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-                          {!stage && (
-                            <button
-                              onClick={(e) => { e.stopPropagation(); addToPipeline(opp, 'watching'); }}
+                            )}
+                            <a
+                              href={`https://${opp.website}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              onClick={e => e.stopPropagation()}
                               style={{
                                 background: 'white',
-                                border: '1px solid #e5e7eb',
+                                border: `1px solid ${COLORS.creamDark}`,
                                 borderRadius: 8,
                                 padding: '10px 20px',
-                                color: '#374151',
-                                cursor: 'pointer',
+                                color: COLORS.warmGray,
+                                textDecoration: 'none',
                                 fontSize: 14,
                                 display: 'flex',
                                 alignItems: 'center',
                                 gap: 8
                               }}
                             >
-                              <Eye size={16} />
-                              Add to Watchlist
-                            </button>
-                          )}
-                          {stage === 'watching' && (
-                            <button
-                              onClick={(e) => { e.stopPropagation(); addToPipeline(opp, 'applied'); }}
-                              style={{
-                                background: '#dcfce7',
-                                border: '1px solid #86efac',
-                                borderRadius: 8,
-                                padding: '10px 20px',
-                                color: '#166534',
-                                cursor: 'pointer',
-                                fontSize: 14,
-                                fontWeight: 500,
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: 8
-                              }}
-                            >
-                              <Send size={16} />
-                              Mark as Applied
-                            </button>
-                          )}
-                          <a
-                            href={`https://${opp.website}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            onClick={e => e.stopPropagation()}
-                            style={{
-                              background: 'white',
-                              border: '1px solid #e5e7eb',
-                              borderRadius: 8,
-                              padding: '10px 20px',
-                              color: '#6b7280',
-                              textDecoration: 'none',
-                              fontSize: 14,
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: 8
-                            }}
-                          >
-                            <ExternalLink size={16} />
-                            Visit Website
-                          </a>
+                              <ExternalLink size={16} />
+                              Visit Website
+                            </a>
+                          </div>
                         </div>
                       </div>
                     )}
@@ -1255,315 +1419,322 @@ export default function App() {
               })}
             </div>
           </>
-        )}
+        )
+        }
 
-        {view === 'pipeline' && (
-          <section>
-            <h2 style={{ fontSize: 20, fontWeight: 700, marginBottom: 24, color: '#111827' }}>
-              📊 Your Pipeline
-            </h2>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 20 }}>
-              {[
-                { id: 'watching', label: '👀 Watching', color: '#f3f4f6' },
-                { id: 'applied', label: '📨 Applied', color: '#dbeafe' },
-                { id: 'interviewing', label: '🎤 Interviewing', color: '#dcfce7' }
-              ].map(stage => (
-                <div key={stage.id} style={{
-                  background: 'white',
-                  border: '1px solid #e5e7eb',
-                  borderRadius: 12,
-                  overflow: 'hidden'
-                }}>
-                  <div style={{
-                    background: stage.color,
-                    padding: '16px 20px',
-                    borderBottom: '1px solid #e5e7eb',
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center'
+        {
+          view === 'pipeline' && (
+            <section>
+              <h2 style={{ fontSize: 20, fontWeight: 700, marginBottom: 24, color: '#111827' }}>
+                📊 Your Pipeline
+              </h2>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 20 }}>
+                {[
+                  { id: 'watching', label: '👀 Watching', color: '#f3f4f6' },
+                  { id: 'applied', label: '📨 Applied', color: '#dbeafe' },
+                  { id: 'interviewing', label: '🎤 Interviewing', color: '#dcfce7' }
+                ].map(stage => (
+                  <div key={stage.id} style={{
+                    background: 'white',
+                    border: '1px solid #e5e7eb',
+                    borderRadius: 12,
+                    overflow: 'hidden'
                   }}>
-                    <h3 style={{ margin: 0, fontSize: 15, fontWeight: 600 }}>{stage.label}</h3>
-                    <span style={{
-                      background: 'white',
-                      padding: '4px 10px',
-                      borderRadius: 12,
-                      fontSize: 13,
-                      fontWeight: 600
-                    }}>{pipeline[stage.id].length}</span>
-                  </div>
-                  <div style={{ padding: 16, minHeight: 200 }}>
-                    {pipeline[stage.id].map(oppId => {
-                      const opp = opportunities.find(o => o.id === oppId);
-                      if (!opp) return null;
-                      return (
-                        <div key={opp.id} style={{
-                          background: '#f9fafb',
-                          border: '1px solid #e5e7eb',
-                          borderRadius: 8,
-                          padding: 14,
-                          marginBottom: 10
-                        }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
-                            <span style={{ fontSize: 20 }}>{opp.logo}</span>
-                            <div>
-                              <p style={{ margin: 0, fontWeight: 600, fontSize: 14 }}>{opp.company}</p>
-                              <p style={{ margin: 0, fontSize: 12, color: '#6366f1' }}>{opp.role}</p>
+                    <div style={{
+                      background: stage.color,
+                      padding: '16px 20px',
+                      borderBottom: '1px solid #e5e7eb',
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center'
+                    }}>
+                      <h3 style={{ margin: 0, fontSize: 15, fontWeight: 600 }}>{stage.label}</h3>
+                      <span style={{
+                        background: 'white',
+                        padding: '4px 10px',
+                        borderRadius: 12,
+                        fontSize: 13,
+                        fontWeight: 600
+                      }}>{pipeline[stage.id].length}</span>
+                    </div>
+                    <div style={{ padding: 16, minHeight: 200 }}>
+                      {pipeline[stage.id].map(oppId => {
+                        const opp = opportunities.find(o => o.id === oppId);
+                        if (!opp) return null;
+                        return (
+                          <div key={opp.id} style={{
+                            background: '#f9fafb',
+                            border: '1px solid #e5e7eb',
+                            borderRadius: 8,
+                            padding: 14,
+                            marginBottom: 10
+                          }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
+                              <span style={{ fontSize: 20 }}>{opp.logo}</span>
+                              <div>
+                                <p style={{ margin: 0, fontWeight: 600, fontSize: 14 }}>{opp.company}</p>
+                                <p style={{ margin: 0, fontSize: 12, color: '#6366f1' }}>{opp.role}</p>
+                              </div>
                             </div>
                           </div>
-                        </div>
-                      );
-                    })}
-                    {pipeline[stage.id].length === 0 && (
-                      <p style={{ color: '#9ca3af', fontSize: 13, textAlign: 'center', margin: '40px 0' }}>
-                        No opportunities yet
-                      </p>
-                    )}
+                        );
+                      })}
+                      {pipeline[stage.id].length === 0 && (
+                        <p style={{ color: '#9ca3af', fontSize: 13, textAlign: 'center', margin: '40px 0' }}>
+                          No opportunities yet
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </section>
+          )
+        }
+
+        {
+          view === 'sources' && (
+            <section>
+              <h2 style={{ fontSize: 20, fontWeight: 700, marginBottom: 8, color: '#111827' }}>
+                🔌 Data Sources
+              </h2>
+              <p style={{ color: '#6b7280', marginBottom: 32 }}>
+                How this data was gathered — no paid APIs required
+              </p>
+
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 20 }}>
+                <div style={{
+                  background: 'white',
+                  border: '1px solid #e5e7eb',
+                  borderRadius: 16,
+                  padding: 24
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
+                    <span style={{ fontSize: 24 }}>🔍</span>
+                    <h3 style={{ margin: 0, fontSize: 16, fontWeight: 600 }}>Web Search (Claude)</h3>
+                  </div>
+                  <p style={{ fontSize: 14, color: '#4b5563', lineHeight: 1.6 }}>
+                    Real-time searches for executive departures, funding rounds, and company news from TechCrunch, Bloomberg, Reuters, Business Insider, and more.
+                  </p>
+                  <div style={{ marginTop: 12, padding: 12, background: '#f0fdf4', borderRadius: 8 }}>
+                    <span style={{ fontSize: 12, color: '#166534' }}>✓ Free • Real-time • Comprehensive</span>
                   </div>
                 </div>
-              ))}
-            </div>
-          </section>
-        )}
 
-        {view === 'sources' && (
-          <section>
-            <h2 style={{ fontSize: 20, fontWeight: 700, marginBottom: 8, color: '#111827' }}>
-              🔌 Data Sources
-            </h2>
-            <p style={{ color: '#6b7280', marginBottom: 32 }}>
-              How this data was gathered — no paid APIs required
-            </p>
-
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 20 }}>
-              <div style={{
-                background: 'white',
-                border: '1px solid #e5e7eb',
-                borderRadius: 16,
-                padding: 24
-              }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
-                  <span style={{ fontSize: 24 }}>🔍</span>
-                  <h3 style={{ margin: 0, fontSize: 16, fontWeight: 600 }}>Web Search (Claude)</h3>
+                <div style={{
+                  background: 'white',
+                  border: '1px solid #e5e7eb',
+                  borderRadius: 16,
+                  padding: 24
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
+                    <span style={{ fontSize: 24 }}>📰</span>
+                    <h3 style={{ margin: 0, fontSize: 16, fontWeight: 600 }}>News Sources Used</h3>
+                  </div>
+                  <ul style={{ margin: 0, padding: '0 0 0 20px', color: '#4b5563', fontSize: 14, lineHeight: 2 }}>
+                    <li>TechCrunch — funding rounds</li>
+                    <li>Bloomberg — executive moves</li>
+                    <li>Reuters — unicorn valuations</li>
+                    <li>Business Insider — departures</li>
+                    <li>Y Combinator — job listings</li>
+                    <li>Company press releases</li>
+                  </ul>
                 </div>
-                <p style={{ fontSize: 14, color: '#4b5563', lineHeight: 1.6 }}>
-                  Real-time searches for executive departures, funding rounds, and company news from TechCrunch, Bloomberg, Reuters, Business Insider, and more.
+
+                <div style={{
+                  background: 'white',
+                  border: '1px solid #e5e7eb',
+                  borderRadius: 16,
+                  padding: 24
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
+                    <span style={{ fontSize: 24 }}>📧</span>
+                    <h3 style={{ margin: 0, fontSize: 16, fontWeight: 600 }}>Contact Discovery</h3>
+                  </div>
+                  <p style={{ fontSize: 14, color: '#4b5563', lineHeight: 1.6 }}>
+                    Email patterns derived from company domains and public sources. For verified emails, use:
+                  </p>
+                  <ul style={{ margin: '12px 0 0', padding: '0 0 0 20px', color: '#4b5563', fontSize: 14, lineHeight: 2 }}>
+                    <li><strong>Apollo.io</strong> — 50 free/month</li>
+                    <li><strong>Hunter.io</strong> — 25 free/month</li>
+                    <li>LinkedIn profiles</li>
+                  </ul>
+                </div>
+
+                <div style={{
+                  background: 'white',
+                  border: '1px solid #e5e7eb',
+                  borderRadius: 16,
+                  padding: 24
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
+                    <span style={{ fontSize: 24 }}>🔔</span>
+                    <h3 style={{ margin: 0, fontSize: 16, fontWeight: 600 }}>Automated Monitoring</h3>
+                  </div>
+                  <p style={{ fontSize: 14, color: '#4b5563', marginBottom: 12 }}>
+                    Set up free Google Alerts for ongoing signals:
+                  </p>
+                  <div style={{ background: '#f9fafb', borderRadius: 8, padding: 12, fontFamily: 'monospace', fontSize: 12, color: '#374151' }}>
+                    "chief product officer" AND (departed OR leaving)<br />
+                    "series B" AND (AI OR "artificial intelligence")<br />
+                    "unicorn" AND AI AND 2026
+                  </div>
+                </div>
+              </div>
+
+              <div style={{
+                background: '#fffbeb',
+                border: '1px solid #fcd34d',
+                borderRadius: 12,
+                padding: 20,
+                marginTop: 32
+              }}>
+                <h4 style={{ margin: '0 0 8px', fontSize: 15, fontWeight: 600, color: '#92400e' }}>
+                  💡 How This Platform Works
+                </h4>
+                <p style={{ margin: 0, fontSize: 14, color: '#92400e', lineHeight: 1.6 }}>
+                  Every opportunity shown is from <strong>real web searches</strong> performed just now. No mock data.
+                  The funding amounts, valuations, executive names, and company details come directly from news sources
+                  published in January/February 2026. To refresh, just ask Claude to search again.
                 </p>
-                <div style={{ marginTop: 12, padding: 12, background: '#f0fdf4', borderRadius: 8 }}>
-                  <span style={{ fontSize: 12, color: '#166534' }}>✓ Free • Real-time • Comprehensive</span>
-                </div>
               </div>
-
-              <div style={{
-                background: 'white',
-                border: '1px solid #e5e7eb',
-                borderRadius: 16,
-                padding: 24
-              }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
-                  <span style={{ fontSize: 24 }}>📰</span>
-                  <h3 style={{ margin: 0, fontSize: 16, fontWeight: 600 }}>News Sources Used</h3>
-                </div>
-                <ul style={{ margin: 0, padding: '0 0 0 20px', color: '#4b5563', fontSize: 14, lineHeight: 2 }}>
-                  <li>TechCrunch — funding rounds</li>
-                  <li>Bloomberg — executive moves</li>
-                  <li>Reuters — unicorn valuations</li>
-                  <li>Business Insider — departures</li>
-                  <li>Y Combinator — job listings</li>
-                  <li>Company press releases</li>
-                </ul>
-              </div>
-
-              <div style={{
-                background: 'white',
-                border: '1px solid #e5e7eb',
-                borderRadius: 16,
-                padding: 24
-              }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
-                  <span style={{ fontSize: 24 }}>📧</span>
-                  <h3 style={{ margin: 0, fontSize: 16, fontWeight: 600 }}>Contact Discovery</h3>
-                </div>
-                <p style={{ fontSize: 14, color: '#4b5563', lineHeight: 1.6 }}>
-                  Email patterns derived from company domains and public sources. For verified emails, use:
-                </p>
-                <ul style={{ margin: '12px 0 0', padding: '0 0 0 20px', color: '#4b5563', fontSize: 14, lineHeight: 2 }}>
-                  <li><strong>Apollo.io</strong> — 50 free/month</li>
-                  <li><strong>Hunter.io</strong> — 25 free/month</li>
-                  <li>LinkedIn profiles</li>
-                </ul>
-              </div>
-
-              <div style={{
-                background: 'white',
-                border: '1px solid #e5e7eb',
-                borderRadius: 16,
-                padding: 24
-              }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
-                  <span style={{ fontSize: 24 }}>🔔</span>
-                  <h3 style={{ margin: 0, fontSize: 16, fontWeight: 600 }}>Automated Monitoring</h3>
-                </div>
-                <p style={{ fontSize: 14, color: '#4b5563', marginBottom: 12 }}>
-                  Set up free Google Alerts for ongoing signals:
-                </p>
-                <div style={{ background: '#f9fafb', borderRadius: 8, padding: 12, fontFamily: 'monospace', fontSize: 12, color: '#374151' }}>
-                  "chief product officer" AND (departed OR leaving)<br />
-                  "series B" AND (AI OR "artificial intelligence")<br />
-                  "unicorn" AND AI AND 2026
-                </div>
-              </div>
-            </div>
-
-            <div style={{
-              background: '#fffbeb',
-              border: '1px solid #fcd34d',
-              borderRadius: 12,
-              padding: 20,
-              marginTop: 32
-            }}>
-              <h4 style={{ margin: '0 0 8px', fontSize: 15, fontWeight: 600, color: '#92400e' }}>
-                💡 How This Platform Works
-              </h4>
-              <p style={{ margin: 0, fontSize: 14, color: '#92400e', lineHeight: 1.6 }}>
-                Every opportunity shown is from <strong>real web searches</strong> performed just now. No mock data.
-                The funding amounts, valuations, executive names, and company details come directly from news sources
-                published in January/February 2026. To refresh, just ask Claude to search again.
-              </p>
-            </div>
-          </section>
-        )}
-      </main>
+            </section>
+          )
+        }
+      </main >
 
       {/* Email Modal */}
-      {showEmailModal && (
-        <div style={{
-          position: 'fixed',
-          inset: 0,
-          background: 'rgba(0, 0, 0, 0.5)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 300,
-          padding: 20
-        }}>
+      {
+        showEmailModal && (
           <div style={{
-            background: 'white',
-            borderRadius: 16,
-            width: '100%',
-            maxWidth: 560,
-            maxHeight: '90vh',
-            overflow: 'auto',
-            boxShadow: '0 20px 40px rgba(0,0,0,0.2)'
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(0, 0, 0, 0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 300,
+            padding: 20
           }}>
             <div style={{
-              padding: '20px 24px',
-              borderBottom: '1px solid #e5e7eb',
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center'
+              background: 'white',
+              borderRadius: 16,
+              width: '100%',
+              maxWidth: 560,
+              maxHeight: '90vh',
+              overflow: 'auto',
+              boxShadow: '0 20px 40px rgba(0,0,0,0.2)'
             }}>
-              <h3 style={{ margin: 0, fontSize: 18, fontWeight: 600 }}>✉️ Draft Outreach</h3>
-              <button
-                onClick={() => setShowEmailModal(false)}
-                style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4 }}
-              >
-                <X size={20} color="#6b7280" />
-              </button>
-            </div>
-            <div style={{ padding: 24 }}>
-              <div style={{ marginBottom: 16 }}>
-                <label style={{ fontSize: 13, color: '#374151', fontWeight: 500, display: 'block', marginBottom: 6 }}>To</label>
-                <input
-                  type="email"
-                  value={emailDraft.to}
-                  onChange={e => setEmailDraft(d => ({ ...d, to: e.target.value }))}
-                  style={{
-                    width: '100%',
-                    padding: '12px 14px',
-                    border: '1px solid #e5e7eb',
-                    borderRadius: 8,
-                    fontSize: 14
-                  }}
-                />
-              </div>
-              <div style={{ marginBottom: 16 }}>
-                <label style={{ fontSize: 13, color: '#374151', fontWeight: 500, display: 'block', marginBottom: 6 }}>Subject</label>
-                <input
-                  type="text"
-                  value={emailDraft.subject}
-                  onChange={e => setEmailDraft(d => ({ ...d, subject: e.target.value }))}
-                  style={{
-                    width: '100%',
-                    padding: '12px 14px',
-                    border: '1px solid #e5e7eb',
-                    borderRadius: 8,
-                    fontSize: 14
-                  }}
-                />
-              </div>
-              <div style={{ marginBottom: 24 }}>
-                <label style={{ fontSize: 13, color: '#374151', fontWeight: 500, display: 'block', marginBottom: 6 }}>Message</label>
-                <textarea
-                  value={emailDraft.body}
-                  onChange={e => setEmailDraft(d => ({ ...d, body: e.target.value }))}
-                  rows={10}
-                  style={{
-                    width: '100%',
-                    padding: '12px 14px',
-                    border: '1px solid #e5e7eb',
-                    borderRadius: 8,
-                    fontSize: 14,
-                    lineHeight: 1.6,
-                    resize: 'vertical'
-                  }}
-                />
-              </div>
-              <div style={{ display: 'flex', gap: 12 }}>
+              <div style={{
+                padding: '20px 24px',
+                borderBottom: '1px solid #e5e7eb',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center'
+              }}>
+                <h3 style={{ margin: 0, fontSize: 18, fontWeight: 600 }}>✉️ Draft Outreach</h3>
                 <button
-                  onClick={() => {
-                    const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(emailDraft.to)}&su=${encodeURIComponent(emailDraft.subject)}&body=${encodeURIComponent(emailDraft.body)}`;
-                    window.open(gmailUrl, '_blank');
-                  }}
-                  style={{
-                    flex: 1,
-                    background: 'linear-gradient(135deg, #ea4335 0%, #c5221f 100%)',
-                    border: 'none',
-                    borderRadius: 8,
-                    padding: '12px 24px',
-                    color: 'white',
-                    cursor: 'pointer',
-                    fontSize: 14,
-                    fontWeight: 500,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: 8
-                  }}
+                  onClick={() => setShowEmailModal(false)}
+                  style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4 }}
                 >
-                  <Mail size={16} />
-                  Open in Gmail
+                  <X size={20} color="#6b7280" />
                 </button>
-                <button
-                  onClick={() => {
-                    navigator.clipboard.writeText(`To: ${emailDraft.to}\nSubject: ${emailDraft.subject}\n\n${emailDraft.body}`);
-                  }}
-                  style={{
-                    background: '#f3f4f6',
-                    border: '1px solid #e5e7eb',
-                    borderRadius: 8,
-                    padding: '12px 24px',
-                    color: '#374151',
-                    cursor: 'pointer',
-                    fontSize: 14
-                  }}
-                >
-                  Copy
-                </button>
+              </div>
+              <div style={{ padding: 24 }}>
+                <div style={{ marginBottom: 16 }}>
+                  <label style={{ fontSize: 13, color: '#374151', fontWeight: 500, display: 'block', marginBottom: 6 }}>To</label>
+                  <input
+                    type="email"
+                    value={emailDraft.to}
+                    onChange={e => setEmailDraft(d => ({ ...d, to: e.target.value }))}
+                    style={{
+                      width: '100%',
+                      padding: '12px 14px',
+                      border: '1px solid #e5e7eb',
+                      borderRadius: 8,
+                      fontSize: 14
+                    }}
+                  />
+                </div>
+                <div style={{ marginBottom: 16 }}>
+                  <label style={{ fontSize: 13, color: '#374151', fontWeight: 500, display: 'block', marginBottom: 6 }}>Subject</label>
+                  <input
+                    type="text"
+                    value={emailDraft.subject}
+                    onChange={e => setEmailDraft(d => ({ ...d, subject: e.target.value }))}
+                    style={{
+                      width: '100%',
+                      padding: '12px 14px',
+                      border: '1px solid #e5e7eb',
+                      borderRadius: 8,
+                      fontSize: 14
+                    }}
+                  />
+                </div>
+                <div style={{ marginBottom: 24 }}>
+                  <label style={{ fontSize: 13, color: '#374151', fontWeight: 500, display: 'block', marginBottom: 6 }}>Message</label>
+                  <textarea
+                    value={emailDraft.body}
+                    onChange={e => setEmailDraft(d => ({ ...d, body: e.target.value }))}
+                    rows={10}
+                    style={{
+                      width: '100%',
+                      padding: '12px 14px',
+                      border: '1px solid #e5e7eb',
+                      borderRadius: 8,
+                      fontSize: 14,
+                      lineHeight: 1.6,
+                      resize: 'vertical'
+                    }}
+                  />
+                </div>
+                <div style={{ display: 'flex', gap: 12 }}>
+                  <button
+                    onClick={() => {
+                      const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(emailDraft.to)}&su=${encodeURIComponent(emailDraft.subject)}&body=${encodeURIComponent(emailDraft.body)}`;
+                      window.open(gmailUrl, '_blank');
+                    }}
+                    style={{
+                      flex: 1,
+                      background: 'linear-gradient(135deg, #ea4335 0%, #c5221f 100%)',
+                      border: 'none',
+                      borderRadius: 8,
+                      padding: '12px 24px',
+                      color: 'white',
+                      cursor: 'pointer',
+                      fontSize: 14,
+                      fontWeight: 500,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: 8
+                    }}
+                  >
+                    <Mail size={16} />
+                    Open in Gmail
+                  </button>
+                  <button
+                    onClick={() => {
+                      navigator.clipboard.writeText(`To: ${emailDraft.to}\nSubject: ${emailDraft.subject}\n\n${emailDraft.body}`);
+                    }}
+                    style={{
+                      background: '#f3f4f6',
+                      border: '1px solid #e5e7eb',
+                      borderRadius: 8,
+                      padding: '12px 24px',
+                      color: '#374151',
+                      cursor: 'pointer',
+                      fontSize: 14
+                    }}
+                  >
+                    Copy
+                  </button>
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      )}
+        )
+      }
 
       {/* Footer */}
       <footer style={{
@@ -1576,6 +1747,283 @@ export default function App() {
       }}>
         Executive Radar v2.0 — Built with real data from web searches • No paid APIs required
       </footer>
-    </div>
+
+      {/* Profile Modal */}
+      {
+        showProfileModal && (
+          <div style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(0,0,0,0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000
+          }}>
+            <div style={{
+              background: 'white',
+              borderRadius: 20,
+              width: '90%',
+              maxWidth: 600,
+              maxHeight: '85vh',
+              overflow: 'auto',
+              boxShadow: '0 20px 60px rgba(0,0,0,0.2)'
+            }}>
+              {/* Modal Header */}
+              <div style={{
+                padding: '24px 28px',
+                borderBottom: `1px solid ${COLORS.creamDark}`,
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                  <User size={24} color={COLORS.coral} />
+                  <h2 style={{ margin: 0, fontSize: 20, fontWeight: 600, color: COLORS.charcoal, fontFamily: "'Source Serif 4', Georgia, serif" }}>
+                    {userProfile ? 'Your Profile' : 'Upload Your Resume'}
+                  </h2>
+                </div>
+                <button
+                  onClick={() => setShowProfileModal(false)}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    cursor: 'pointer',
+                    padding: 8
+                  }}
+                >
+                  <X size={20} color={COLORS.warmGray} />
+                </button>
+              </div>
+
+              {/* Modal Content */}
+              <div style={{ padding: 28 }}>
+                {userProfile ? (
+                  // Show Profile
+                  <div>
+                    <div style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 16,
+                      marginBottom: 24,
+                      padding: 20,
+                      background: COLORS.cream,
+                      borderRadius: 16
+                    }}>
+                      <div style={{
+                        width: 64,
+                        height: 64,
+                        borderRadius: '50%',
+                        background: `linear-gradient(135deg, ${COLORS.coral} 0%, ${COLORS.coralDark} 100%)`,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        color: 'white',
+                        fontSize: 24,
+                        fontWeight: 600
+                      }}>
+                        {userProfile.name?.split(' ').map(n => n[0]).join('').slice(0, 2) || 'U'}
+                      </div>
+                      <div>
+                        <h3 style={{ margin: 0, fontSize: 20, color: COLORS.charcoal }}>{userProfile.name || 'Unknown'}</h3>
+                        <p style={{ margin: '4px 0 0', color: COLORS.warmGray }}>{userProfile.title || 'Executive'}</p>
+                        {userProfile.location && (
+                          <p style={{ margin: '4px 0 0', color: COLORS.warmGrayLight, fontSize: 13 }}>
+                            <MapPin size={12} style={{ display: 'inline', marginRight: 4 }} />
+                            {userProfile.location}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+
+                    {userProfile.summary && (
+                      <div style={{ marginBottom: 20 }}>
+                        <h4 style={{ fontSize: 13, color: COLORS.warmGray, fontWeight: 600, marginBottom: 8 }}>Summary</h4>
+                        <p style={{ margin: 0, fontSize: 14, color: COLORS.charcoalLight, lineHeight: 1.6 }}>{userProfile.summary}</p>
+                      </div>
+                    )}
+
+                    {userProfile.skills?.length > 0 && (
+                      <div style={{ marginBottom: 20 }}>
+                        <h4 style={{ fontSize: 13, color: COLORS.warmGray, fontWeight: 600, marginBottom: 8 }}>Key Skills</h4>
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                          {userProfile.skills.map((skill, i) => (
+                            <span key={i} style={{
+                              padding: '6px 12px',
+                              background: COLORS.creamDark,
+                              borderRadius: 16,
+                              fontSize: 13,
+                              color: COLORS.charcoalLight
+                            }}>{skill}</span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {userProfile.targetRoles?.length > 0 && (
+                      <div style={{ marginBottom: 20 }}>
+                        <h4 style={{ fontSize: 13, color: COLORS.warmGray, fontWeight: 600, marginBottom: 8 }}>Target Roles</h4>
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                          {userProfile.targetRoles.map((role, i) => (
+                            <span key={i} style={{
+                              padding: '6px 12px',
+                              background: COLORS.coralLight + '30',
+                              border: `1px solid ${COLORS.coralLight}`,
+                              borderRadius: 16,
+                              fontSize: 13,
+                              color: COLORS.coralDark
+                            }}>{role}</span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {userProfile.companies?.length > 0 && (
+                      <div style={{ marginBottom: 20 }}>
+                        <h4 style={{ fontSize: 13, color: COLORS.warmGray, fontWeight: 600, marginBottom: 8 }}>Previous Companies</h4>
+                        <p style={{ margin: 0, fontSize: 14, color: COLORS.charcoalLight }}>{userProfile.companies.join(' • ')}</p>
+                      </div>
+                    )}
+
+                    <div style={{ display: 'flex', gap: 12, marginTop: 24 }}>
+                      <label style={{
+                        flex: 1,
+                        padding: 14,
+                        background: 'white',
+                        border: `1px solid ${COLORS.creamDark}`,
+                        borderRadius: 10,
+                        color: COLORS.charcoal,
+                        cursor: 'pointer',
+                        fontSize: 14,
+                        fontWeight: 500,
+                        textAlign: 'center'
+                      }}>
+                        <FileText size={16} style={{ display: 'inline', marginRight: 8 }} />
+                        Update Resume
+                        <input
+                          type="file"
+                          accept=".txt,.pdf,.doc,.docx"
+                          onChange={handleResumeUpload}
+                          style={{ display: 'none' }}
+                        />
+                      </label>
+                      <button
+                        onClick={() => {
+                          setUserProfile(null);
+                          localStorage.removeItem('executiveRadarProfile');
+                        }}
+                        style={{
+                          padding: '14px 20px',
+                          background: 'white',
+                          border: `1px solid ${COLORS.coralLight}`,
+                          borderRadius: 10,
+                          color: COLORS.coralDark,
+                          cursor: 'pointer',
+                          fontSize: 14,
+                          fontWeight: 500
+                        }}
+                      >
+                        Clear Profile
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  // Upload Resume
+                  <div>
+                    <p style={{ margin: '0 0 20px', color: COLORS.warmGray, lineHeight: 1.6 }}>
+                      Upload your resume to get personalized job matches. We'll analyze your skills and experience to find opportunities tailored to your background.
+                    </p>
+
+                    <label style={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      padding: 40,
+                      border: `2px dashed ${COLORS.creamDark}`,
+                      borderRadius: 16,
+                      cursor: 'pointer',
+                      marginBottom: 20,
+                      transition: 'all 0.2s'
+                    }}>
+                      {isParsingResume ? (
+                        <>
+                          <Loader2 size={40} color={COLORS.coral} style={{ animation: 'spin 1s linear infinite' }} />
+                          <p style={{ margin: '16px 0 0', color: COLORS.coral, fontWeight: 500 }}>Analyzing your resume...</p>
+                        </>
+                      ) : (
+                        <>
+                          <Upload size={40} color={COLORS.warmGray} />
+                          <p style={{ margin: '16px 0 0', color: COLORS.charcoal, fontWeight: 500 }}>Click to upload resume</p>
+                          <p style={{ margin: '8px 0 0', color: COLORS.warmGrayLight, fontSize: 13 }}>Supports .txt, .pdf, .doc, .docx</p>
+                        </>
+                      )}
+                      <input
+                        type="file"
+                        accept=".txt,.pdf,.doc,.docx"
+                        onChange={handleResumeUpload}
+                        style={{ display: 'none' }}
+                        disabled={isParsingResume}
+                      />
+                    </label>
+
+                    <div style={{ textAlign: 'center', margin: '20px 0', color: COLORS.warmGray }}>— or paste your resume text —</div>
+
+                    <textarea
+                      value={resumeText}
+                      onChange={(e) => setResumeText(e.target.value)}
+                      placeholder="Paste your resume content here..."
+                      style={{
+                        width: '100%',
+                        minHeight: 150,
+                        padding: 16,
+                        border: `1px solid ${COLORS.creamDark}`,
+                        borderRadius: 12,
+                        fontSize: 14,
+                        resize: 'vertical',
+                        fontFamily: 'inherit'
+                      }}
+                    />
+
+                    <button
+                      onClick={handleResumePaste}
+                      disabled={!resumeText.trim() || isParsingResume}
+                      style={{
+                        width: '100%',
+                        marginTop: 16,
+                        padding: 16,
+                        background: resumeText.trim() ? `linear-gradient(135deg, ${COLORS.coral} 0%, ${COLORS.coralDark} 100%)` : COLORS.creamDark,
+                        border: 'none',
+                        borderRadius: 12,
+                        color: resumeText.trim() ? 'white' : COLORS.warmGray,
+                        cursor: resumeText.trim() ? 'pointer' : 'not-allowed',
+                        fontSize: 15,
+                        fontWeight: 600,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: 8
+                      }}
+                    >
+                      {isParsingResume ? (
+                        <>
+                          <Loader2 size={18} style={{ animation: 'spin 1s linear infinite' }} />
+                          Analyzing...
+                        </>
+                      ) : (
+                        <>
+                          <Sparkles size={18} />
+                          Analyze Resume
+                        </>
+                      )}
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )
+      }
+    </div >
   );
 }
