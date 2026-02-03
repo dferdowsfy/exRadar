@@ -1,9 +1,51 @@
-// Gemini API Integration for Executive Radar
-// Use environment variable or fallback to hardcoded key
-const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY || 'AIzaSyDUMXY4SRekjLcVBDrJVW90suGMhyGhvjE';
-const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent';
+// OpenRouter API Integration for Executive Radar
+// Using GPT-4o-mini with search capabilities
+const OPENROUTER_API_KEY = import.meta.env.VITE_OPENROUTER_API_KEY || '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';
+const OPENROUTER_API_URL = 'https://openrouter.ai/api/v1/chat/completions';
+const MODEL = 'openai/gpt-4o-mini-search-preview';
 
-export async function generateOpportunities(searchQuery, count = 50, userProfile = null, options = {}) {
+async function callOpenRouter(messages, temperature = 0.8, maxTokens = 16000) {
+    const response = await fetch(OPENROUTER_API_URL, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${OPENROUTER_API_KEY}`,
+            'HTTP-Referer': 'https://dferdowsfy.github.io/exRadar',
+            'X-Title': 'Executive Radar'
+        },
+        body: JSON.stringify({
+            model: MODEL,
+            messages: messages,
+            temperature: temperature,
+            max_tokens: maxTokens
+        })
+    });
+
+    if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        console.error('OpenRouter API error:', response.status, errorData);
+        throw new Error(`OpenRouter API error: ${response.status} - ${errorData.error?.message || 'Unknown error'}`);
+    }
+
+    const data = await response.json();
+    return data.choices?.[0]?.message?.content || '';
+}
+
+function cleanJsonResponse(text) {
+    let cleanedText = text.trim();
+    if (cleanedText.startsWith('```json')) {
+        cleanedText = cleanedText.slice(7);
+    }
+    if (cleanedText.startsWith('```')) {
+        cleanedText = cleanedText.slice(3);
+    }
+    if (cleanedText.endsWith('```')) {
+        cleanedText = cleanedText.slice(0, -3);
+    }
+    return cleanedText.trim();
+}
+
+export async function generateOpportunities(searchQuery, count = 20, userProfile = null, options = {}) {
     const { includeFractional = false } = options;
 
     const profileContext = userProfile ? `
@@ -29,104 +71,62 @@ Include fractional executive roles, part-time advisory positions, and interim le
 Mark these with "isFractional": true in the response.
 ` : '';
 
-    const prompt = `You are an elite executive recruiter with access to real-time job market data. Generate exactly ${count} realistic executive job opportunities for the search query: "${searchQuery}".
+    const prompt = `You are an elite executive recruiter with access to real-time job market data via web search. Search the internet and generate exactly ${count} realistic executive job opportunities for the search query: "${searchQuery}".
 
 ${profileContext}
 ${fractionalContext}
 
-IMPORTANT: Search for REAL, CURRENT opportunities. Think about:
-- Companies that recently raised funding (Series A-E in the last 6 months)
-- Companies with recent executive departures
+IMPORTANT: Use your web search capabilities to find REAL, CURRENT opportunities from:
+- Recent funding announcements (Series A-E in the last 6 months)
+- Executive departures and leadership changes
 - Fast-growing startups in AI, security, robotics, fintech
-- Companies actively hiring for leadership roles
+- Companies actively hiring for leadership roles on LinkedIn, Greenhouse, Lever
 
 Return a JSON array with exactly ${count} objects. Each object must have:
 {
-  "company": "Real company name (active tech companies only)",
+  "company": "Real company name",
   "role": "Specific executive role (e.g. 'VP of Product', 'Fractional CPO', 'Head of AI Engineering')",
-  "isFractional": boolean (true if this is a fractional/part-time/advisory role),
+  "isFractional": false,
   "description": "2-3 sentences about the company's core business and market position.",
   "hiringLeader": {
-    "name": "Real Name (CEO/Founder/Executive)",
-    "title": "Actual Title",
-    "email": "firstname.lastname@company.com (guess the most likely pattern)",
-    "linkedin": "https://linkedin.com/in/[handle]"
+    "name": "CEO/Founder name",
+    "title": "Title",
+    "email": "contact@company.com",
+    "linkedin": "https://linkedin.com/company/companyname"
   },
   "location": "City, State (or Remote)",
-  "employees": number,
+  "employees": 100,
   "fundingStage": "e.g. 'Series B ($50M)'",
   "fundingDate": "e.g. 'Jan 2026'",
   "revenue": "e.g. '$10M ARR'",
-  "remote": boolean,
-  "signals": ["FUNDING", "GROWTH", "DEPARTURE", "PIVOT", "UNICORN", "STEALTH"] (select 1-3),
-  "sector": "agentic-ai" | "ai-security" | "physical-ai" | "vibe-coding" | "ai-infra" | "vertical-ai",
-  "confidence": number 80-99 (how likely this role exists),
-  
-  "fitScore": number 60-99 (based on resume alignment if provided, otherwise relevance to search),
-  "fitReasons": ["Specific matching skill", "Industry alignment", "Experience level match"],
-  "matchAnalysis": "2 sentences explaining WHY this specific candidate is a good fit for this specific role based on their resume context.",
-  
-  "strategicDirection": "2 sentences on their immediate roadmap.",
-  "futureProofReasoning": "Explain why this company is resilient to AI disruption.",
-  
-  "jobUrl": "DIRECT URL to job posting or LinkedIn jobs search. Use: 'https://www.linkedin.com/jobs/search/?keywords=[role]+[company]' format.",
-  "newsSource": "Recent headline about funding, growth, or leadership changes",
-  "website": "domain.com"
+  "remote": true,
+  "signals": ["FUNDING"],
+  "sector": "agentic-ai",
+  "confidence": 85,
+  "fitScore": 80,
+  "fitReasons": ["Skill match", "Industry alignment"],
+  "matchAnalysis": "Brief explanation of fit.",
+  "strategicDirection": "Company direction.",
+  "futureProofReasoning": "Why this company is resilient.",
+  "jobUrl": "https://www.linkedin.com/jobs/search/?keywords=role+company",
+  "newsSource": "Recent headline",
+  "website": "company.com"
 }
 
-CRITICAL RULES:
-1. Generate DIVERSE companies - mix of startups, growth-stage, and established tech.
-2. If resume provided, prioritize opportunities matching their specific skills.
-3. Include a mix of full-time and ${includeFractional ? 'fractional/advisory' : 'leadership'} roles.
-4. Generate ${count} UNIQUE results. Do not repeat companies.
-
-Return ONLY valid JSON array.`;
+CRITICAL: Return ONLY a valid JSON array, no markdown, no explanations.`;
 
     try {
-        const response = await fetch(`${GEMINI_API_URL}?key=${GEMINI_API_KEY}`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                contents: [{
-                    parts: [{
-                        text: prompt
-                    }]
-                }],
-                generationConfig: {
-                    temperature: 0.85,
-                    topK: 40,
-                    topP: 0.95,
-                    maxOutputTokens: 65536, // Increased for larger result sets
-                }
-            })
-        });
-
-        if (!response.ok) {
-            throw new Error(`Gemini API error: ${response.status}`);
-        }
-
-        const data = await response.json();
-        const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+        console.log('Calling OpenRouter API for opportunities...');
+        const text = await callOpenRouter([
+            { role: 'user', content: prompt }
+        ], 0.8, 16000);
 
         if (!text) {
-            throw new Error('No response from Gemini');
+            throw new Error('No response from OpenRouter');
         }
 
-        // Clean up the response - remove markdown code blocks if present
-        let cleanedText = text.trim();
-        if (cleanedText.startsWith('```json')) {
-            cleanedText = cleanedText.slice(7);
-        }
-        if (cleanedText.startsWith('```')) {
-            cleanedText = cleanedText.slice(3);
-        }
-        if (cleanedText.endsWith('```')) {
-            cleanedText = cleanedText.slice(0, -3);
-        }
-
-        const opportunities = JSON.parse(cleanedText.trim());
+        const cleanedText = cleanJsonResponse(text);
+        const opportunities = JSON.parse(cleanedText);
 
         // Add IDs and icons to each opportunity
         const icons = ['shield', 'target', 'cpu', 'code', 'brain', 'cloud', 'rocket', 'layers', 'server', 'bot'];
@@ -138,24 +138,24 @@ Return ONLY valid JSON array.`;
         }));
 
     } catch (error) {
-        console.error('Gemini API error:', error);
+        console.error('OpenRouter API error:', error);
         throw error;
     }
 }
 
 export async function enrichOpportunity(company, role) {
-    const prompt = `Provide detailed information about the executive opportunity at ${company} for the role: ${role}.
+    const prompt = `Search for detailed information about the executive opportunity at ${company} for the role: ${role}.
 
 Return a JSON object with:
 {
   "companyOverview": "3-4 sentences about what the company does, their main products, and market position",
-  "strategicDirection": "3-4 sentences about where the company is heading - recent pivots, expansion plans, new product areas",
+  "strategicDirection": "3-4 sentences about where the company is heading",
   "recentNews": ["headline 1", "headline 2", "headline 3"],
   "keyExecutives": [
     {"name": "Name", "title": "Title", "linkedin": "linkedin url"}
   ],
-  "jobDescription": "If you know of an active job posting, describe the role requirements. Otherwise provide typical requirements for this role at this company.",
-  "competitiveAdvantage": "What makes this company unique in their space",
+  "jobDescription": "Role requirements",
+  "competitiveAdvantage": "What makes this company unique",
   "challenges": "Key challenges the company faces",
   "whyJoinNow": "Why this is an opportune time to join"
 }
@@ -163,43 +163,12 @@ Return a JSON object with:
 Return ONLY valid JSON, no markdown.`;
 
     try {
-        const response = await fetch(`${GEMINI_API_URL}?key=${GEMINI_API_KEY}`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                contents: [{
-                    parts: [{
-                        text: prompt
-                    }]
-                }],
-                generationConfig: {
-                    temperature: 0.7,
-                    maxOutputTokens: 4096,
-                }
-            })
-        });
+        const text = await callOpenRouter([
+            { role: 'user', content: prompt }
+        ], 0.7, 4096);
 
-        if (!response.ok) {
-            throw new Error(`Gemini API error: ${response.status}`);
-        }
-
-        const data = await response.json();
-        const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
-
-        let cleanedText = text.trim();
-        if (cleanedText.startsWith('```json')) {
-            cleanedText = cleanedText.slice(7);
-        }
-        if (cleanedText.startsWith('```')) {
-            cleanedText = cleanedText.slice(3);
-        }
-        if (cleanedText.endsWith('```')) {
-            cleanedText = cleanedText.slice(0, -3);
-        }
-
-        return JSON.parse(cleanedText.trim());
+        const cleanedText = cleanJsonResponse(text);
+        return JSON.parse(cleanedText);
 
     } catch (error) {
         console.error('Enrichment error:', error);
@@ -221,56 +190,26 @@ Return a JSON object with:
   "phone": "Phone if found",
   "location": "Location if found",
   "summary": "2-3 sentence professional summary",
-  "skills": ["skill1", "skill2", ...] (list of key skills, max 15),
+  "skills": ["skill1", "skill2"] (list of key skills, max 15),
   "experience": "Brief summary of experience level and years",
-  "industries": ["industry1", "industry2", ...] (industries they've worked in),
-  "companies": ["company1", "company2", ...] (notable companies worked at),
-  "targetRoles": ["VP Product", "Head of Engineering", ...] (suggested executive roles based on background),
+  "industries": ["industry1", "industry2"] (industries they've worked in),
+  "companies": ["company1", "company2"] (notable companies worked at),
+  "targetRoles": ["VP Product", "Head of Engineering"] (suggested executive roles based on background),
   "strengths": ["strength1", "strength2", "strength3"] (top 3 professional strengths),
-  "idealCompanyStage": "Startup | Growth | Enterprise | Any" (best fit company stage),
-  "topSectors": ["ai-security", "agentic-ai", ...] (best matching sectors from: agentic-ai, ai-security, physical-ai, vibe-coding, ai-infra, vertical-ai)
+  "idealCompanyStage": "Startup | Growth | Enterprise | Any",
+  "topSectors": ["ai-security", "agentic-ai"] (best matching sectors from: agentic-ai, ai-security, physical-ai, vibe-coding, ai-infra, vertical-ai)
 }
 
 Return ONLY valid JSON, no markdown.`;
 
     try {
-        const response = await fetch(`${GEMINI_API_URL}?key=${GEMINI_API_KEY}`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                contents: [{
-                    parts: [{
-                        text: prompt
-                    }]
-                }],
-                generationConfig: {
-                    temperature: 0.3,
-                    maxOutputTokens: 4096,
-                }
-            })
-        });
+        console.log('Parsing resume with OpenRouter...');
+        const text = await callOpenRouter([
+            { role: 'user', content: prompt }
+        ], 0.3, 4096);
 
-        if (!response.ok) {
-            throw new Error(`Gemini API error: ${response.status}`);
-        }
-
-        const data = await response.json();
-        const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
-
-        let cleanedText = text.trim();
-        if (cleanedText.startsWith('```json')) {
-            cleanedText = cleanedText.slice(7);
-        }
-        if (cleanedText.startsWith('```')) {
-            cleanedText = cleanedText.slice(3);
-        }
-        if (cleanedText.endsWith('```')) {
-            cleanedText = cleanedText.slice(0, -3);
-        }
-
-        return JSON.parse(cleanedText.trim());
+        const cleanedText = cleanJsonResponse(text);
+        return JSON.parse(cleanedText);
 
     } catch (error) {
         console.error('Resume parsing error:', error);
