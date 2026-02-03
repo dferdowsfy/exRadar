@@ -1,7 +1,7 @@
 // Gemini API Integration for Executive Radar
 // Use environment variable or fallback to hardcoded key
 const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY || 'AIzaSyDUMXY4SRekjLcVBDrJVW90suGMhyGhvjE';
-const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent';
+const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-04-17:generateContent';
 
 export async function generateOpportunities(searchQuery, count = 50, userProfile = null, options = {}) {
     const { includeFractional = false } = options;

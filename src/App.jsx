@@ -7,6 +7,8 @@ import {
   Briefcase, ArrowUpRight, Compass, Lightbulb, Upload, User, FileText, Settings, RefreshCcw
 } from 'lucide-react';
 import { generateOpportunities, enrichOpportunity, parseResume } from './geminiApi';
+import { extractTextFromFile } from './pdfUtils';
+
 
 
 
@@ -408,16 +410,21 @@ export default function App() {
     setIsParsingResume(true);
 
     try {
-      const text = await file.text();
+      // Use PDF extraction utility for proper text parsing
+      const text = await extractTextFromFile(file);
       setResumeText(text);
+      console.log('Extracted resume text:', text.substring(0, 500) + '...');
 
       const profile = await parseResume(text);
       if (profile) {
         setUserProfile(profile);
         setShowProfileModal(false);
+        // Trigger a refresh with the new profile
+        setTimeout(() => handleRefresh(), 500);
       }
     } catch (error) {
       console.error('Resume upload error:', error);
+      alert('Failed to parse resume. Please try pasting the text directly.');
     } finally {
       setIsParsingResume(false);
     }
