@@ -1,6 +1,6 @@
 // OpenRouter API Integration for Executive Radar
 // Using GPT-4o-mini with search capabilities
-const OPENROUTER_API_KEY = import.meta.env.VITE_OPENROUTER_API_KEY || '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';
+const OPENROUTER_API_KEY = import.meta.env.VITE_OPENROUTER_API_KEY || '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';
 const OPENROUTER_API_URL = 'https://openrouter.ai/api/v1/chat/completions';
 const MODEL = 'openai/gpt-4o-mini-search-preview';
 
