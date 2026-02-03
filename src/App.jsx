@@ -630,7 +630,10 @@ export default function App() {
       setLastUpdated(new Date());
     } catch (error) {
       console.error('Search error:', error);
-      setSearchError('Failed to fetch latest opportunities. Please try again.');
+      // Fallback to locally generated search results if API fails
+      const fallbackResults = generateDynamicOpportunities(query, 50);
+      setOpportunities(fallbackResults);
+      setSearchError('Live search unavailable. Showing estimated results based on your query.');
     } finally {
       setIsSearching(false);
     }
@@ -647,10 +650,16 @@ export default function App() {
       if (results && results.length > 0) {
         setOpportunities(results.sort((a, b) => b.fitScore - a.fitScore));
         setLastUpdated(new Date());
+      } else {
+        // Fallback if no results returned
+        setOpportunities(REAL_OPPORTUNITIES);
+        setSearchError('No fresh signals found. Showing recently cached opportunities.');
       }
     } catch (error) {
       console.error('Refresh error:', error);
-      setSearchError('Failed to refresh listings. Using local cache.');
+      // Fallback to real opportunities if refresh fails
+      setOpportunities(REAL_OPPORTUNITIES);
+      setSearchError('Live refresh unavailable. Showing recently cached opportunities.');
     } finally {
       setIsSearching(false);
     }
