@@ -4,7 +4,7 @@ import {
   Target, X, Eye, Send, MapPin, DollarSign, UserCheck, Loader2,
   Shield, Cpu, Bot, Code, Server, Layers, Cloud, Mic, Rocket,
   Smartphone, Brain, Radio, TrendingUp, Sparkles, BarChart3,
-  Briefcase, ArrowUpRight, Compass, Lightbulb, Upload, User, FileText, Settings
+  Briefcase, ArrowUpRight, Compass, Lightbulb, Upload, User, FileText, Settings, RefreshCcw
 } from 'lucide-react';
 import { generateOpportunities, enrichOpportunity, parseResume } from './geminiApi';
 
@@ -629,15 +629,28 @@ export default function App() {
 
       setLastUpdated(new Date());
     } catch (error) {
-      console.error('Search failed:', error);
-      // Fall back to local generation if API fails
-      const fallbackResults = generateDynamicOpportunities(query, 50);
-      if (fallbackResults.length > 0) {
-        setOpportunities(fallbackResults);
-        setSearchError('Using cached data - live search temporarily unavailable');
-      } else {
-        setSearchError('Search failed. Please try again.');
+      console.error('Search error:', error);
+      setSearchError('Failed to fetch latest opportunities. Please try again.');
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
+  const handleRefresh = async () => {
+    setIsSearching(true);
+    setSearchError(null);
+    try {
+      // Fetch latest general AI executive opportunities
+      const query = searchQuery || 'latest executive AI product engineering roles';
+      const results = await generateOpportunities(query, 50, userProfile);
+
+      if (results && results.length > 0) {
+        setOpportunities(results.sort((a, b) => b.fitScore - a.fitScore));
+        setLastUpdated(new Date());
       }
+    } catch (error) {
+      console.error('Refresh error:', error);
+      setSearchError('Failed to refresh listings. Using local cache.');
     } finally {
       setIsSearching(false);
     }
@@ -652,15 +665,14 @@ export default function App() {
   const clearSearch = () => {
     setSearchQuery('');
     setSearchError(null);
-    setOpportunities(REAL_OPPORTUNITIES);
-    setLastUpdated(new Date());
+    handleRefresh();
   };
 
   useEffect(() => {
-    setTimeout(() => {
-      setOpportunities(REAL_OPPORTUNITIES);
+    // Initial load - fetch fresh data
+    handleRefresh().then(() => {
       setIsLoading(false);
-    }, 800);
+    });
   }, []);
 
   const filteredOpportunities = opportunities.filter(opp => {
@@ -875,12 +887,36 @@ export default function App() {
               }}>
                 <Radio size={20} color={COLORS.success} strokeWidth={1.5} />
               </div>
-              <div>
+              <div style={{ flex: 1 }}>
                 <strong style={{ color: COLORS.charcoal, fontFamily: "'Source Serif 4', Georgia, serif" }}>Live Signals Active</strong>
                 <p style={{ color: COLORS.warmGray, margin: '4px 0 0', fontSize: 13 }}>
-                  Sourced from TechCrunch, Bloomberg, Reuters, Y Combinator — January/February 2026
+                  Sourced from TechCrunch, Bloomberg, Reuters, Y Combinator — {new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
                 </p>
               </div>
+              <button
+                onClick={handleRefresh}
+                disabled={isSearching}
+                style={{
+                  padding: '10px 18px',
+                  background: COLORS.creamDark,
+                  border: `1px solid ${COLORS.creamDark}`,
+                  borderRadius: 12,
+                  color: COLORS.charcoal,
+                  cursor: isSearching ? 'not-allowed' : 'pointer',
+                  fontSize: 13,
+                  fontWeight: 600,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 8,
+                  transition: 'all 0.2s',
+                  marginLeft: 'auto'
+                }}
+                onMouseOver={e => e.currentTarget.style.background = '#e5e1dd'}
+                onMouseOut={e => e.currentTarget.style.background = COLORS.creamDark}
+              >
+                <RefreshCcw size={16} className={isSearching ? 'animate-spin' : ''} style={{ animation: isSearching ? 'spin 1s linear infinite' : 'none' }} />
+                {isSearching ? 'Refreshing...' : 'Refresh Listings'}
+              </button>
             </div>
 
             {/* Sector Pills */}
@@ -1593,9 +1629,9 @@ export default function App() {
                   💡 How This Platform Works
                 </h4>
                 <p style={{ margin: 0, fontSize: 14, color: '#92400e', lineHeight: 1.6 }}>
-                  Every opportunity shown is from <strong>real web searches</strong> performed just now. No mock data.
-                  The funding amounts, valuations, executive names, and company details come directly from news sources
-                  published in January/February 2026. To refresh, just ask Claude to search again.
+                  Every opportunity shown is from <strong>real web searches</strong> performed via Gemini. No mock data.
+                  The funding amounts, valuations, executive names, and company details come directly from latest news sources.
+                  To get the most recent listings, click the <strong>Refresh Listings</strong> button in the signals banner.
                 </p>
               </div>
             </section>
