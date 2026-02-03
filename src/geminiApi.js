@@ -6,7 +6,7 @@ const OPENROUTER_API_KEY = k1 + k2;
 const OPENROUTER_API_URL = 'https://openrouter.ai/api/v1/chat/completions';
 
 console.log('Using OpenRouter Key (Last 4):', '...' + OPENROUTER_API_KEY.slice(-4));
-const MODEL = 'moonshotai/kimi-k2.5';
+const MODEL = 'deepseek/deepseek-v3.2';
 
 async function callOpenRouter(messages, temperature = 0.8, maxTokens = 16000) {
     const response = await fetch(OPENROUTER_API_URL, {
