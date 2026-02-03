@@ -373,7 +373,7 @@ Darius`
 export default function App() {
   const [opportunities, setOpportunities] = useState([]);
   const [selectedOpp, setSelectedOpp] = useState(null);
-  const [filters, setFilters] = useState({ sector: 'all', minConfidence: 60, minFit: 70, remoteOnly: false });
+  const [filters, setFilters] = useState({ sector: 'all', minConfidence: 60, minFit: 70, remoteOnly: false, includeFractional: false });
   const [view, setView] = useState('opportunities');
   const [showEmailModal, setShowEmailModal] = useState(false);
   const [emailDraft, setEmailDraft] = useState({ to: '', subject: '', body: '' });
@@ -601,7 +601,9 @@ export default function App() {
 
     try {
       // Use Gemini API for real, accurate company data - pass user profile for personalization
-      const results = await generateOpportunities(query, 50, userProfile);
+      const results = await generateOpportunities(query, 50, userProfile, {
+        includeFractional: filters.includeFractional
+      });
 
       if (results && results.length > 0) {
         // Combine with any matching real opportunities
@@ -643,13 +645,37 @@ export default function App() {
     setIsSearching(true);
     setSearchError(null);
     try {
-      // Fetch latest general AI executive opportunities
-      const query = searchQuery || 'latest executive AI product engineering roles';
-      const results = await generateOpportunities(query, 50, userProfile);
+      // Build a resume-aware search query
+      let query = searchQuery;
+
+      if (!query && userProfile) {
+        // Generate query from user profile
+        const skills = userProfile.skills?.slice(0, 3).join(', ') || '';
+        const targetRoles = userProfile.targetRoles?.slice(0, 2).join(' OR ') || 'VP Product, Head of AI';
+        const industries = userProfile.industries?.slice(0, 2).join(', ') || 'AI, Technology';
+
+        query = `${targetRoles} roles in ${industries}${skills ? ` requiring ${skills}` : ''}`;
+
+        // Add fractional context if enabled
+        if (filters.includeFractional) {
+          query += ' including fractional, interim, and advisory positions';
+        }
+      } else if (!query) {
+        query = filters.includeFractional
+          ? 'executive AI product engineering fractional interim advisory roles'
+          : 'latest executive AI product engineering leadership roles';
+      }
+
+      console.log('Searching for:', query);
+
+      const results = await generateOpportunities(query, 50, userProfile, {
+        includeFractional: filters.includeFractional
+      });
 
       if (results && results.length > 0) {
         setOpportunities(results.sort((a, b) => b.fitScore - a.fitScore));
         setLastUpdated(new Date());
+        setSearchError(null);
       } else {
         // Fallback if no results returned
         setOpportunities(REAL_OPPORTUNITIES);
@@ -1078,6 +1104,16 @@ export default function App() {
                   <span style={{ fontSize: 13, color: '#374151' }}>Remote only</span>
                 </label>
 
+                <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
+                  <input
+                    type="checkbox"
+                    checked={filters.includeFractional}
+                    onChange={e => setFilters(f => ({ ...f, includeFractional: e.target.checked }))}
+                    style={{ width: 16, height: 16 }}
+                  />
+                  <span style={{ fontSize: 13, color: COLORS.coral, fontWeight: 500 }}>Fractional/Advisory</span>
+                </label>
+
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                   <span style={{ fontSize: 13, color: '#6b7280' }}>Min fit:</span>
                   <select
@@ -1099,6 +1135,7 @@ export default function App() {
                 </div>
               </div>
             </section>
+
 
             {/* Search Error/No Results Message */}
             {searchError && (

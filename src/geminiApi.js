@@ -1,8 +1,11 @@
 // Gemini API Integration for Executive Radar
-const GEMINI_API_KEY = 'AIzaSyDUMXY4SRekjLcVBDrJVW90suGMhyGhvjE';
+// Use environment variable or fallback to hardcoded key
+const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY || 'AIzaSyDUMXY4SRekjLcVBDrJVW90suGMhyGhvjE';
 const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent';
 
-export async function generateOpportunities(searchQuery, count = 50, userProfile = null) {
+export async function generateOpportunities(searchQuery, count = 50, userProfile = null, options = {}) {
+    const { includeFractional = false } = options;
+
     const profileContext = userProfile ? `
 CRITICAL - USER RESUME CONTEXT:
 The user has the following background. You MUST score and rank opportunities based on alignment with this profile:
@@ -10,20 +13,38 @@ The user has the following background. You MUST score and rank opportunities bas
 - **Experience Summary:** ${userProfile.summary || 'Not specified'}
 - **Target Roles:** ${userProfile.targetRoles?.join(', ') || 'Executive/VP level'}
 - **Past Industries:** ${userProfile.industries?.join(', ') || 'Not specified'}
+- **Past Companies:** ${userProfile.companies?.join(', ') || 'Not specified'}
+- **Strengths:** ${userProfile.strengths?.join(', ') || 'Not specified'}
 
-For each opportunity, calculate a "fitScore" (0-100) based on how well the user's specific skills and experience (e.g. "${userProfile.skills?.[0] || 'Tech'}") match the role requirements.
+Generate opportunities that specifically match this candidate's background. Calculate a "fitScore" (0-100) based on how well the user's specific skills and experience match the role requirements.
 ` : '';
 
-    const prompt = `You are an elite executive recruiter. Generate exactly ${count} realistic executive job opportunities for the search query: "${searchQuery}".
+    const fractionalContext = includeFractional ? `
+INCLUDE FRACTIONAL/PART-TIME ROLES:
+Include fractional executive roles, part-time advisory positions, and interim leadership opportunities such as:
+- Fractional CPO, Fractional CTO, Fractional VP Product
+- Interim Head of AI, Interim VP Engineering
+- Part-time AI Advisor, Strategic Advisor roles
+- Board Advisory positions
+Mark these with "isFractional": true in the response.
+` : '';
+
+    const prompt = `You are an elite executive recruiter with access to real-time job market data. Generate exactly ${count} realistic executive job opportunities for the search query: "${searchQuery}".
 
 ${profileContext}
+${fractionalContext}
 
-For each opportunity, provide DEEP INSIGHTS and REAL DATA:
+IMPORTANT: Search for REAL, CURRENT opportunities. Think about:
+- Companies that recently raised funding (Series A-E in the last 6 months)
+- Companies with recent executive departures
+- Fast-growing startups in AI, security, robotics, fintech
+- Companies actively hiring for leadership roles
 
 Return a JSON array with exactly ${count} objects. Each object must have:
 {
   "company": "Real company name (active tech companies only)",
-  "role": "Specific executive role (e.g. 'VP of Product', 'Chief of Staff', 'Head of AI Engineering')",
+  "role": "Specific executive role (e.g. 'VP of Product', 'Fractional CPO', 'Head of AI Engineering')",
+  "isFractional": boolean (true if this is a fractional/part-time/advisory role),
   "description": "2-3 sentences about the company's core business and market position.",
   "hiringLeader": {
     "name": "Real Name (CEO/Founder/Executive)",
@@ -43,21 +64,21 @@ Return a JSON array with exactly ${count} objects. Each object must have:
   
   "fitScore": number 60-99 (based on resume alignment if provided, otherwise relevance to search),
   "fitReasons": ["Specific matching skill", "Industry alignment", "Experience level match"],
-  "matchAnalysis": "2 sentences explaining WHY this specific candidate is a good fit for this specific role based on their resume context (e.g. 'Your experience in X aligns perfectly with their need for Y').",
+  "matchAnalysis": "2 sentences explaining WHY this specific candidate is a good fit for this specific role based on their resume context.",
   
-  "strategicDirection": "2 sentences on their immediate roadmap (e.g. 'Expanding into enterprise sales').",
-  "futureProofReasoning": "CRITICAL: Explain why this company is resilient to AI disruption. Do they have proprietary data? Hardware moat? Regulatory capture? Network effects? (e.g. 'Their massive proprietary dataset of medical records creates a moat that generic LLMs cannot easily replicate.')",
+  "strategicDirection": "2 sentences on their immediate roadmap.",
+  "futureProofReasoning": "Explain why this company is resilient to AI disruption.",
   
-  "jobUrl": "DIRECT URL to a specific job posting. Do NOT use generic careers pages. Use patterns like: 'https://boards.greenhouse.io/[company]/jobs/[id]', 'https://jobs.lever.co/[company]/[id]', 'https://www.linkedin.com/jobs/view/[id]'. If specific ID unknown, deep link to the search page: 'https://www.google.com/search?q=site:lever.co+[company]+[role]&ibp=htl;jobs'",
-  "newsSource": "Recent headline",
+  "jobUrl": "DIRECT URL to job posting or LinkedIn jobs search. Use: 'https://www.linkedin.com/jobs/search/?keywords=[role]+[company]' format.",
+  "newsSource": "Recent headline about funding, growth, or leadership changes",
   "website": "domain.com"
 }
 
 CRITICAL RULES:
-1. **NO GENERIC LINKS**: 'jobUrl' must look like a deep link to a specific role, not just 'company.com/careers'.
-2. **FUTURE PROOF**: The 'futureProofReasoning' must be insightful and specific to the company's business model.
-3. **RESUME MATCH**: If a resume is provided, 'fitScore' and 'matchAnalysis' MUST be personalized.
-4. **QUANTITY**: You MUST generate ${count} unique results. Do not repeat companies.
+1. Generate DIVERSE companies - mix of startups, growth-stage, and established tech.
+2. If resume provided, prioritize opportunities matching their specific skills.
+3. Include a mix of full-time and ${includeFractional ? 'fractional/advisory' : 'leadership'} roles.
+4. Generate ${count} UNIQUE results. Do not repeat companies.
 
 Return ONLY valid JSON array.`;
 
