@@ -1,12 +1,12 @@
 // OpenRouter API Integration for Executive Radar
-// Using GPT-4o-mini with search capabilities
+// Using Perplexity Sonar for real-time web search capabilities
 const k1 = 'sk-or-v1-649c3585ae991b5f28';
 const k2 = '96403823baf22be88065d3d417a95084f6f9bb57276997';
 const OPENROUTER_API_KEY = k1 + k2;
 const OPENROUTER_API_URL = 'https://openrouter.ai/api/v1/chat/completions';
 
 console.log('Using OpenRouter Key (Last 4):', '...' + OPENROUTER_API_KEY.slice(-4));
-const MODEL = 'deepseek/deepseek-v3.2';
+const MODEL = 'perplexity/sonar';
 
 async function callOpenRouter(messages, temperature = 0.8, maxTokens = 16000) {
     const response = await fetch(OPENROUTER_API_URL, {
